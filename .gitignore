@@ -1,2 +1,13 @@
 /Docs
 .gemini
+
+#Python
+venv/
+__pycache__/
+*.pyc
+*.Pyo
+.env
+
+# IDE
+.vscode/
+.idea/
