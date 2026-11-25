@@ -1,11 +1,16 @@
 import uuid
+from typing import Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import WebhookJob
-from app.schemas import WebhookDispatchRequest, WebhookDispatchResponse
+from app.schemas import (
+    DeliveryLogResponse,
+    WebhookDispatchRequest,
+    WebhookDispatchResponse,
+)
 from app.workers.delivery import deliver_webhook
 
 router = APIRouter()
@@ -37,3 +42,26 @@ async def dispatch_webhook(
 
     
     return WebhookDispatchResponse(status="queued", jobId=job_id)
+
+@router.get("/jobs/{job_id}", response_model=DeliveryLogResponse)
+def get_job_status(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(WebhookJob).filter(WebhookJob.id == job_id).first()
+    if not job:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = f"Job {job_id} not found",
+        )
+    return job
+
+
+@router.get("/logs", response_model=list[DeliveryLogResponse])
+def get_delivery_logs(
+    status_filter: Optional[str] = Query(default=None, alias="status"),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    query = db.query(WebhookJob)
+    if status_filter:
+        query = query.filter(WebhookJob.status == status_filter)
+    return query.order_by(WebhookJob.created_at.desc()).limit(limit).all()
+    
