@@ -7,6 +7,7 @@ from app.celery_app import celery
 from app.config import settings
 from app.db import SessionLocal
 from app.models import WebhookJob
+from app.services.rate_limiter import allow_request
 
 
 @celery.task(
@@ -18,6 +19,9 @@ def deliver_webhook(self, job_id: str):
     try:
         job = db.query(WebhookJob).filter(WebhookJob.id == job_id).first()
         if not job:
+            return
+        if not allow_request(job.destination_url):
+            deliver_webhook.apply_async(args=[job_id], countdown=1)
             return
         
         try:
