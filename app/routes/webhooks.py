@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import WebhookJob
 from app.schemas import WebhookDispatchRequest, WebhookDispatchResponse
+from app.workers.delivery import deliver_webhook
 
 router = APIRouter()
 
@@ -31,6 +32,8 @@ async def dispatch_webhook(
     )
     db.add(job)
     db.commit()
+
+    deliver_webhook.delay(job_id)
 
     
     return WebhookDispatchResponse(status="queued", jobId=job_id)
