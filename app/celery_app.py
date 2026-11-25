@@ -16,4 +16,4 @@ celery.conf.update(
     task_track_started=True,
 )
 
-celery.autodiscover_tasks(["app.workers"])
+celery.autodiscover_tasks(["app.workers"], related_name="delivery")

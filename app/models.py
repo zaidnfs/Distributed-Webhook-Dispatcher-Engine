@@ -18,7 +18,7 @@ class WebhookJob(Base):
     attempt_count = Column(Integer, default=0)
     http_status_code = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.UTC))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_attempt_at = Column(DateTime, nullable=True)
     next_retry_at = Column(DateTime, nullable=True)
 
